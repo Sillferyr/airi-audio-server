@@ -93,7 +93,7 @@ const MODEL_CATALOG = [
       "fish_drama3.pin_experts": "true",
       "fish_drama3.expert_cache_size": "16",
       "fish_drama3.cpu_expert_layers": "0",
-      "fish_drama3.codec_backend": "cpu",
+      "fish_drama3.codec_backend": "same",
       "fish_drama3.context_length": "2048"
     }
   }
