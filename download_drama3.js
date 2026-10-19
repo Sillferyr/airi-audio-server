@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const { spawnSync } = require('child_process');
 
 function resolvePath(p) {
   if (!p) return '';
@@ -85,28 +86,33 @@ function ensureSidecarConfig(targetDir) {
   }
 }
 
-function registerInServerConfig(modelRelPath) {
+function registerInServerConfig(modelId, modelRelPath) {
   const configPath = path.join(__dirname, 'config.json');
   if (fs.existsSync(configPath)) {
     try {
       const cfg = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
       if (!cfg.models) cfg.models = {};
-      cfg.models['fish-drama3'] = {
+      cfg.models[modelId] = {
         family: 'fish_drama3',
         path: modelRelPath,
         mode: 'streaming',
         allow_unfiltered_tags: true,
         session_options: {
-          'fish_drama3.cpu_expert_layers': '24',
+          'cuda_graphs': 'false',
+          'fish_drama3.disk_experts': 'true',
+          'fish_drama3.pin_experts': 'true',
+          'fish_drama3.expert_cache_size': '16',
+          'fish_drama3.cpu_expert_layers': '0',
+          'fish_drama3.codec_backend': 'same',
           'fish_drama3.context_length': '2048'
         }
       };
       if (!cfg.installed_models) cfg.installed_models = [];
-      if (!cfg.installed_models.includes('fish-drama3')) {
-        cfg.installed_models.push('fish-drama3');
+      if (!cfg.installed_models.includes(modelId)) {
+        cfg.installed_models.push(modelId);
       }
       fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2), 'utf-8');
-      console.log(`✓ Registered 'fish-drama3' in config.json with CPU offload layers=24`);
+      console.log(`✓ Registered '${modelId}' in config.json with optimized GPU backend.`);
     } catch (e) {
       console.warn(`[Warning] Could not auto-update config.json: ${e.message}`);
     }
@@ -114,43 +120,63 @@ function registerInServerConfig(modelRelPath) {
 }
 
 async function main() {
+  const useQ2K = process.argv.includes('--q2k') || process.argv.includes('--large');
+
   console.log("=".repeat(65));
-  console.log("   AIRI Audio Server - Fish Audio Drama 3 (Q2_K) Installer     ");
+  console.log("       AIRI Audio Server - Fish Audio Drama 3 Installer          ");
   console.log("=".repeat(65));
   console.log("\nFish Audio Drama 3 is a 40-layer hybrid attention/MoE speech");
-  console.log("synthesis model with 256 experts per layer, zero-shot voice cloning,");
-  console.log("paralinguistic event tags, and real-time streaming.\n");
-  console.log("Package : drama-3-backbone-8bit-experts-Q2_K.gguf (~15.88 GB)");
-  console.log("Source  : Jmica/Drama-3-GGUF (Hugging Face)\n");
+  console.log("synthesis model with zero-shot voice cloning, paralinguistic tags,");
+  console.log("and real-time streaming.\n");
 
-  const url = "https://huggingface.co/Jmica/Drama-3-GGUF/resolve/main/drama-3-backbone-8bit-experts-Q2_K.gguf";
-  const relPath = "models/Drama-3-GGUF/drama-3-backbone-8bit-experts-Q2_K.gguf";
+  const repo = useQ2K ? "Jmica/Drama-3-GGUF" : "pentacoxian-dev/drama3-small-GGUF";
+  const filename = useQ2K ? "drama-3-backbone-8bit-experts-Q2_K.gguf" : "drama3-small-IQ3_XXS.gguf";
+  const dirName = useQ2K ? "Drama-3-GGUF" : "Drama3-small-GGUF";
+  const modelId = useQ2K ? "fish-drama3-q2k" : "fish-drama3";
+  const minSize = useQ2K ? 15000000000 : 9000000000;
+  const relPath = `models/${dirName}/${filename}`;
   const targetPath = resolvePath(relPath);
+  const url = `https://huggingface.co/${repo}/resolve/main/${filename}`;
 
-  if (fs.existsSync(targetPath) && fs.statSync(targetPath).size > 15000000000) {
-    console.log(`✓ Fish Audio Drama 3 Q2_K is already downloaded at: ${targetPath}`);
+  console.log(`Selected Tier: ${useQ2K ? 'Drama 3 Q2_K (Original 15.88 GB MoE)' : 'Drama 3 Small IQ3_XXS (Optimized 9.74 GB MoE)'}`);
+  console.log(`Repository   : ${repo}`);
+  console.log(`File         : ${filename}\n`);
+
+  if (fs.existsSync(targetPath) && fs.statSync(targetPath).size > minSize) {
+    console.log(`✓ Model package is already downloaded at: ${targetPath}`);
     ensureSidecarConfig(path.dirname(targetPath));
-    registerInServerConfig(relPath);
+    registerInServerConfig(modelId, relPath);
     return;
   }
 
   try {
-    const { spawnSync } = require('child_process');
     const localDir = path.dirname(targetPath);
-    console.log(`Checking HuggingFace CLI acceleration...`);
-    const hfCheck = spawnSync('py', ['-m', 'huggingface_hub.cli.hf', 'download', 'Jmica/Drama-3-GGUF', 'drama-3-backbone-8bit-experts-Q2_K.gguf', '--local-dir', localDir, '--max-workers', '8'], {
+    console.log(`Attempting accelerated download via HuggingFace Hub...`);
+    const hfArgs = ['-m', 'huggingface_hub.cli.hf', 'download', repo, filename];
+    if (!useQ2K) hfArgs.push('silence_codes.json');
+    hfArgs.push('--local-dir', localDir);
+
+    const hfCheck = spawnSync('py', hfArgs, {
       stdio: 'inherit',
       cwd: __dirname
     });
-    if (hfCheck.status !== 0 || !fs.existsSync(targetPath) || fs.statSync(targetPath).size < 1000000) {
+
+    if (hfCheck.status !== 0 || !fs.existsSync(targetPath) || fs.statSync(targetPath).size < minSize) {
       console.log(`\nFalling back to direct HTTPS chunked stream download...`);
       await downloadFile(url, targetPath);
+      if (!useQ2K) {
+        const scUrl = `https://huggingface.co/${repo}/resolve/main/silence_codes.json`;
+        const scTarget = path.join(localDir, 'silence_codes.json');
+        await downloadFile(scUrl, scTarget).catch(() => {});
+      }
     }
+
     ensureSidecarConfig(path.dirname(targetPath));
-    registerInServerConfig(relPath);
+    registerInServerConfig(modelId, relPath);
+
     console.log("\n" + "=".repeat(65));
-    console.log("✓ Fish Audio Drama 3 Q2_K Installation Complete!");
-    console.log("You can now call POST /v1/audio/speech with model: 'fish-drama3'");
+    console.log(`✓ Fish Audio Drama 3 (${useQ2K ? 'Q2_K' : 'Small IQ3_XXS'}) Installation Complete!`);
+    console.log(`You can now call POST /v1/audio/speech with model: '${modelId}'`);
     console.log("=".repeat(65) + "\n");
   } catch (err) {
     console.error(`\n[Download Error] ${err.message}`);
