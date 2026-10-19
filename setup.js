@@ -80,12 +80,12 @@ const MODEL_CATALOG = [
   {
     num: "8",
     id: "fish-drama3",
-    name: "Fish Audio Drama 3 Q2_K (Next-Gen MoE TTS)",
+    name: "Fish Audio Drama 3 Small IQ3_XXS (Optimized MoE TTS)",
     family: "fish_drama3",
-    vram: "~5.50 GB (offloaded)",
-    features: "40-layer MoE, Zero-Shot Voice Cloning, Paralinguistic & Speaker Tags, SSE Streaming",
-    relPath: "models/Drama-3-GGUF/drama-3-backbone-8bit-experts-Q2_K.gguf",
-    downloadUrl: "https://huggingface.co/Jmica/Drama-3-GGUF/resolve/main/drama-3-backbone-8bit-experts-Q2_K.gguf",
+    vram: "~4.50 GB (offloaded)",
+    features: "40-layer MoE (Pruned), Zero-Shot Voice Cloning, Paralinguistic Tags, SSE Streaming",
+    relPath: "models/Drama3-small-GGUF/drama3-small-IQ3_XXS.gguf",
+    downloadUrl: "https://huggingface.co/pentacoxian-dev/drama3-small-GGUF/resolve/main/drama3-small-IQ3_XXS.gguf",
     mode: "streaming",
     session_options: {
       "cuda_graphs": "false",
