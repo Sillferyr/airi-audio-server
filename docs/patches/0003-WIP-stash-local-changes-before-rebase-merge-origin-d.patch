@@ -1,0 +1,254 @@
+From 288377d9222313f8cf46e52bc82ded248373d4eb Mon Sep 17 00:00:00 2001
+From: Richard Pinedo <richard.pinedo@yahoo.com>
+Date: Thu, 17 Sep 2026 09:59:11 -0400
+Subject: [PATCH 3/3] WIP: stash local changes before rebase/merge origin/dev
+
+---
+ CMakeLists.txt                                |  9 ----
+ model_specs/chatterbox.json                   | 20 +++++++++
+ model_specs/fish_audio.json                   | 18 +-------
+ quantize_higgs.bat                            | 42 ++-----------------
+ scripts/build_windows.ps1                     |  6 +--
+ .../attention/longformer_attention.cpp        |  6 +--
+ src/models/qwen3_asr/audio_encoder.cpp        | 14 +++++--
+ 7 files changed, 43 insertions(+), 72 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 0838fef1..438b4ef4 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -618,15 +618,6 @@ target_link_libraries(engine_runtime PUBLIC ggml)
+ target_link_libraries(engine_runtime PRIVATE sentencepiece cjson_vendor yaml_vendor)
+ if (ENGINE_ENABLE_OPENMP)
+     target_link_libraries(engine_runtime PRIVATE OpenMP::OpenMP_CXX)
+-    if (MSVC)
+-        # MSVC's default /openmp implements only OpenMP 2.0 and rejects the
+-        # '#pragma omp simd' directives in longformer_attention.cpp (error C7660).
+-        # /openmp:experimental enables the OpenMP 4.0 SIMD support; it overrides the
+-        # /openmp added by OpenMP::OpenMP_CXX above (harmless D9025 override notice).
+-        # Guard on CXX: nvcc does not forward a bare /openmp:experimental to the host
+-        # compiler and instead treats it as a second input file, which is fatal.
+-        target_compile_options(engine_runtime PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/openmp:experimental>)
+-    endif()
+ endif()
+ 
+ if (ENGINE_ENABLE_CUDA)
+diff --git a/model_specs/chatterbox.json b/model_specs/chatterbox.json
+index c7e116b9..d8e1440e 100644
+--- a/model_specs/chatterbox.json
++++ b/model_specs/chatterbox.json
+@@ -36,6 +36,26 @@
+         }
+       }
+     },
++    {
++      "format": "gguf",
++      "roots": {
++        "model": ".",
++        "weights": "$gguf"
++      },
++      "files": {
++        "english_tokenizer": "model:tokenizer.json",
++        "multilingual_tokenizer": "model:grapheme_mtl_merged_expanded_v1.json",
++        "cangjie_mapping": "model:Cangjie5_TC.json",
++        "builtin_conditionals": "model:conds.pt"
++      },
++      "tensors": {
++        "voice_encoder_weights": "weights:",
++        "s3gen_weights": "weights:",
++        "t3_english_weights": "weights:",
++        "t3_multilingual_v2_weights": "weights:",
++        "t3_multilingual_v3_weights": "weights:"
++      }
++    },
+     {
+       "format": "safetensors",
+       "roots": {
+diff --git a/model_specs/fish_audio.json b/model_specs/fish_audio.json
+index 73e7a869..16c7431e 100644
+--- a/model_specs/fish_audio.json
++++ b/model_specs/fish_audio.json
+@@ -10,7 +10,8 @@
+       "files": {
+         "config": "model:config.json",
+         "tokenizer_config": "model:tokenizer_config.json",
+-        "tokenizer_json": "model:tokenizer.json"
++        "tokenizer_json": "model:tokenizer.json",
++        "special_tokens_map": "model:special_tokens_map.json"
+       },
+       "tensors": {
+         "model_weights": {
+@@ -22,21 +23,6 @@
+           "prefix": "codec_weights"
+         }
+       }
+-    },
+-    {
+-      "format": "safetensors",
+-      "roots": {
+-        "model": "."
+-      },
+-      "files": {
+-        "config": "model:config.json",
+-        "tokenizer_config": "model:tokenizer_config.json",
+-        "tokenizer_json": "model:tokenizer.json"
+-      },
+-      "tensors": {
+-        "model_weights": "model:model_audio_cpp.safetensors.index.json",
+-        "codec_weights": "model:codec.safetensors"
+-      }
+     }
+   ]
+ }
+diff --git a/quantize_higgs.bat b/quantize_higgs.bat
+index 7adc1037..91a3733d 100644
+--- a/quantize_higgs.bat
++++ b/quantize_higgs.bat
+@@ -7,45 +7,11 @@ echo      audio.cpp - Higgs Audio v3 GGUF Quantizer Script
+ echo ============================================================
+ echo:
+ 
+-set ROOT_DIR=%~dp0
+-set HIGGS_SRC_DIR=C:\Users\h4rdc\Documents\Github\coding-agent\chatterbox\higgs\higgs-audio-v3-tts-4b-fp8
+-set SPEC_FILE=%ROOT_DIR%model_specs\higgs_audio_tts.json
+-set OUTPUT_DIR=%ROOT_DIR%models\Higgs-GGUF
+-set OUTPUT_GGUF=%OUTPUT_DIR%\higgs-audio-q8_0.gguf
+-set GGUF_TOOL=%ROOT_DIR%build\windows-cuda-release\bin\audiocpp_gguf.exe
++set PYTHON_EXE=C:\Users\h4rdc\Documents\Github\coding-agent\chatterbox\venv\Scripts\python.exe
+ 
+-if not exist "%OUTPUT_DIR%" (
+-    mkdir "%OUTPUT_DIR%"
+-)
+-
+-if not exist "%GGUF_TOOL%" (
+-    echo [ERROR] audiocpp_gguf.exe binary not found at: %GGUF_TOOL%
+-    echo Please build audio.cpp first using CMake.
+-    pause
+-    exit /b 1
+-)
+-
+-echo [1/2] Quantizing Higgs Audio v3 weights to Q8_0 GGUF...
+-echo Source     : %HIGGS_SRC_DIR%
+-echo Output GGUF: %OUTPUT_GGUF%
+-echo:
+-
+-"%GGUF_TOOL%" ^
+-  --input "%HIGGS_SRC_DIR%\model.safetensors" ^
+-  --root "%HIGGS_SRC_DIR%" ^
+-  --model-spec "%SPEC_FILE%" ^
+-  --output "%OUTPUT_GGUF%" ^
+-  --type q8_0 ^
+-  --keep-type "embeddings*=orig" ^
+-  --overwrite
+-
+-if %errorlevel% equ 0 (
+-    echo.
+-    echo [SUCCESS] Higgs Audio Q8_0 GGUF quantized successfully!
+-    echo Output File: %OUTPUT_GGUF%
+-) else (
+-    echo.
+-    echo [ERROR] Quantization failed with error code %errorlevel%.
++if not exist "%PYTHON_EXE%" (
++    set PYTHON_EXE=python
+ )
+ 
++"%PYTHON_EXE%" build_higgs_gguf.py
+ pause
+diff --git a/scripts/build_windows.ps1 b/scripts/build_windows.ps1
+index c584975d..d2de58b0 100644
+--- a/scripts/build_windows.ps1
++++ b/scripts/build_windows.ps1
+@@ -481,8 +481,8 @@ $configureArgs = @(
+     "-DCMAKE_MAKE_PROGRAM=$(Convert-ToCMakePath $ninja)",
+     "-DCMAKE_MT=$(Convert-ToCMakePath $mt)",
+     "-DCMAKE_RC_COMPILER=$(Convert-ToCMakePath $rc)",
+-    "-DOpenMP_C_FLAGS=/openmp:experimental",
+-    "-DOpenMP_CXX_FLAGS=/openmp:experimental",
++    "-DOpenMP_C_FLAGS=/openmp",
++    "-DOpenMP_CXX_FLAGS=/openmp",
+     "-DENGINE_ENABLE_CUDA=$($settings.EnableCuda)",
+     "-DENGINE_ENABLE_OPENMP=ON",
+     "-DENGINE_ENABLE_CUDA_GRAPHS=$($settings.EnableCudaGraphs)",
+@@ -505,7 +505,7 @@ if ($isCudaPreset) {
+     $configureArgs += "-DCUDAToolkit_ROOT=$(Convert-ToCMakePath $cudaRoot)"
+     $configureArgs += "-DCMAKE_CUDA_HOST_COMPILER=$(Convert-ToCMakePath $cl)"
+     $configureArgs += "-DCMAKE_CUDA_FLAGS=-Xcompiler=/utf-8"
+-    $configureArgs += "-DOpenMP_CUDA_FLAGS=/openmp:experimental"
++    $configureArgs += "-DOpenMP_CUDA_FLAGS=/openmp"
+ }
+ if ($isCudaPreset -and $arch -ne "") {
+     $configureArgs += "-DCMAKE_CUDA_ARCHITECTURES=$arch"
+diff --git a/src/framework/modules/attention/longformer_attention.cpp b/src/framework/modules/attention/longformer_attention.cpp
+index 7ff2d94c..f7a3fa03 100644
+--- a/src/framework/modules/attention/longformer_attention.cpp
++++ b/src/framework/modules/attention/longformer_attention.cpp
+@@ -669,7 +669,7 @@ void compute_longform_attention_host(
+                             const float * p_ptr = pos_idx >= 0
+                                 ? p.data() + p_head_base + static_cast<size_t>(pos_idx * head_dim)
+                                 : nullptr;
+-#ifdef _OPENMP
++#if defined(_OPENMP) && !defined(_MSC_VER)
+                             #pragma omp simd reduction(+:content)
+ #endif
+                             for (int64_t d = 0; d < head_dim; ++d) {
+@@ -677,7 +677,7 @@ void compute_longform_attention_host(
+                             }
+                             float value = content;
+                             if (p_ptr != nullptr) {
+-#ifdef _OPENMP
++#if defined(_OPENMP) && !defined(_MSC_VER)
+                                 #pragma omp simd reduction(+:positional)
+ #endif
+                                 for (int64_t d = 0; d < head_dim; ++d) {
+@@ -722,7 +722,7 @@ void compute_longform_attention_host(
+                                 continue;
+                             }
+                             const float * v_ptr = v.data() + v_head_base + static_cast<size_t>(key_t * head_dim);
+-#ifdef _OPENMP
++#if defined(_OPENMP) && !defined(_MSC_VER)
+                             #pragma omp simd
+ #endif
+                             for (int64_t d = 0; d < head_dim; ++d) {
+diff --git a/src/models/qwen3_asr/audio_encoder.cpp b/src/models/qwen3_asr/audio_encoder.cpp
+index 66870194..3cc18a65 100644
+--- a/src/models/qwen3_asr/audio_encoder.cpp
++++ b/src/models/qwen3_asr/audio_encoder.cpp
+@@ -314,9 +314,13 @@ std::shared_ptr<const Qwen3ASRAudioEncoderWeights> load_weights(
+     return weights;
+ }
+ 
++#if defined(_MSC_VER)
++#pragma optimize("", off)
++#endif
+ modules::TransformerEncoderBlockWeights bind_layer(const AudioLayerWeights & weights) {
+-    modules::TransformerEncoderBlockWeights block;
+-    block.norm1 = {weights.self_attn_norm_weight, weights.self_attn_norm_bias};
++    modules::TransformerEncoderBlockWeights block{};
++    block.norm1.weight = weights.self_attn_norm_weight;
++    block.norm1.bias = weights.self_attn_norm_bias;
+     block.self_attention.q_weight = weights.q_proj_weight;
+     block.self_attention.q_bias = weights.q_proj_bias;
+     block.self_attention.k_weight = weights.k_proj_weight;
+@@ -328,7 +332,8 @@ modules::TransformerEncoderBlockWeights bind_layer(const AudioLayerWeights & wei
+     block.self_attention.out_weight = weights.out_proj_weight;
+     block.self_attention.out_bias = weights.out_proj_bias;
+     block.layer_scale1 = std::nullopt;
+-    block.norm2 = {weights.final_norm_weight, weights.final_norm_bias};
++    block.norm2.weight = weights.final_norm_weight;
++    block.norm2.bias = weights.final_norm_bias;
+     block.feed_forward.fc1_weight = weights.fc1_weight;
+     block.feed_forward.fc1_bias = weights.fc1_bias;
+     block.feed_forward.fc2_weight = weights.fc2_weight;
+@@ -336,6 +341,9 @@ modules::TransformerEncoderBlockWeights bind_layer(const AudioLayerWeights & wei
+     block.layer_scale2 = std::nullopt;
+     return block;
+ }
++#if defined(_MSC_VER)
++#pragma optimize("", on)
++#endif
+ 
+ class Qwen3ASRAudioEncoderGraph {
+ public:
+-- 
+2.46.2.windows.1
+

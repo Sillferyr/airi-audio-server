@@ -130,5 +130,401 @@
   "zenbara": {
     "file": "voices/zenbara.wav",
     "transcript": "look an anger rocket it needs fuel and that's you push all your anger"
+  },
+  "narrator_pocketfm": {
+    "file": "voices/narrator_pocketfm.wav",
+    "transcript": "slips and took a large swig the taste was bitter and metallic but the effect was immediate the crushing pressure of maner receded as if a window had been opened in a suffocating room it wouldn't last long but it would have to be enough the deep assassin find"
+  },
+  "ren_pocketfm": {
+    "file": "voices/ren_pocketfm.wav",
+    "transcript": "these two are the most valuable though they're also the least valuable and the"
+  },
+  "r1999-37-best": {
+    "file": "voices/r1999-37-best.wav",
+    "transcript": "the shape of truth is not fixed any one who tries to figure it out is doomed to get lost on their way so i decide to draw the one i assume but just to get it out of my mind"
+  },
+  "yino_draco": {
+    "file": "voices/yino_draco.wav",
+    "transcript": "no it is far too soon some one has stolen the egg and when i find them they will pay deilly"
+  },
+  "taro_orion": {
+    "file": "voices/taro_orion.wav",
+    "transcript": "finally are you okay i thought you had died stay still the potion is still working"
+  },
+  "jarvis": {
+    "file": "voices/jarvis.wav",
+    "transcript": "unfortunately it is impossible to synthesize"
+  },
+  "zhao_zeus": {
+    "file": "voices/zhao_zeus.wav",
+    "transcript": "no it is far too soon some one has stolen the egg and when i find them they will pay dearly"
+  },
+  "aries_friend": {
+    "file": "voices/aries_friend.wav",
+    "transcript": "finally are you okay i thought you had died stay still the potion is still working"
+  },
+  "richard": {
+    "file": "voices/richard.wav",
+    "transcript": "hello, this is a test, this is a test one two three four, the quick-bron fox jumped over the lazy dogs."
+  },
+  "moss_warm_narrator": {
+    "file": "voices/moss_warm_narrator.wav",
+    "transcript": "Welcome back to AIRI. Today we are designing voices entirely from text descriptions."
+  },
+  "tamer_julius": {
+    "file": "voices/tamer_julius.wav",
+    "transcript": "I found him. Unfortunately, I couldn't take down the mercenary in time, but the perimeter is secure."
+  },
+  "tamer_arturo": {
+    "file": "voices/tamer_arturo.wav",
+    "transcript": "Politics is like cultivation, except instead of improving your own core, you must constantly manage the flaws of others."
+  },
+  "tamer_mayo": {
+    "file": "voices/tamer_mayo.wav",
+    "transcript": "Some things are better left for the interested parties to resolve themselves, wouldn't you say?"
+  },
+  "tamer_selphia": {
+    "file": "voices/tamer_selphia.wav",
+    "transcript": "Papa, the crystal is agitated today. We should hurry before the resonance spreads."
+  },
+  "tamer_selthia": {
+    "file": "voices/tamer_selthia.wav",
+    "transcript": "Father was recovered in time. And most of the accumulated materials are safe in the vault."
+  },
+  "tamer_matilda": {
+    "file": "voices/tamer_matilda.wav",
+    "transcript": "Oh, indeed. Lady Leora disappeared and curiously at the exact same moment our little prodigy left the premises."
+  },
+  "tamer_lissa": {
+    "file": "voices/tamer_lissa.wav",
+    "transcript": "You did exactly what my father asked you to do, didn't you? Thank you for protecting him."
+  },
+  "tamer_shizu": {
+    "file": "voices/tamer_shizu.wav",
+    "transcript": "Keep the pace. We need to reach camp as soon as possible before the fog settles."
+  },
+  "tamer_trent": {
+    "file": "voices/tamer_trent.wav",
+    "transcript": "Shadow stalker hive ahead. Stay low and do not make a sound."
+  },
+  "tamer_hikari": {
+    "file": "voices/tamer_hikari.wav",
+    "transcript": "Do we retreat, or do you have another plan for those auxiliary roots?"
+  },
+  "tamer_rin": {
+    "file": "voices/tamer_rin.wav",
+    "transcript": "Typical of a tamer with fire element. They always think brute force solves every obstacle."
+  },
+  "tamer_drygarian": {
+    "file": "voices/tamer_drygarian.wav",
+    "transcript": "Pass it to your brothers. We stand together or not at all."
+  },
+  "tamer_fungus": {
+    "file": "voices/tamer_fungus.wav",
+    "transcript": "I am a symbiotic companion. Stop treating me like common garden fungi."
+  },
+  "tamer_crystal": {
+    "file": "voices/tamer_crystal.wav",
+    "transcript": "You can hear us. The pulse of the deep stone has not faded."
+  },
+  "tamer_ravenspire": {
+    "file": "voices/tamer_ravenspire.wav",
+    "transcript": "The seal on young Lionel's chest will disappear sooner than anyone anticipated."
+  },
+  "tamer_coleorn": {
+    "file": "voices/tamer_coleorn.wav",
+    "transcript": "Yes, little star. It's urgent. The borders have been breached."
+  },
+  "tamer_morgaine": {
+    "file": "voices/tamer_morgaine.wav",
+    "transcript": "What a surprise to see you here. I thought your family was in complete isolation."
+  },
+  "tamer_chen": {
+    "file": "voices/tamer_chen.wav",
+    "transcript": "Just the smoke in the distance. We thought some drunk had knocked over a lantern."
+  },
+  "tamer_dorian": {
+    "file": "voices/tamer_dorian.wav",
+    "transcript": "And the king hasn't shown signs of life in years. It's time someone took decisive initiative."
+  },
+  "tamer_magnus": {
+    "file": "voices/tamer_magnus.wav",
+    "transcript": "It's time to be realistic. This war is going to be brutal, and undisciplined recruits won't survive the first wave."
+  },
+  "tamer_shelong": {
+    "file": "voices/tamer_shelong.wav",
+    "transcript": "At last we meet. The aura clinging to your soul smells of ancient dragons."
+  },
+  "tamer_hector": {
+    "file": "voices/tamer_hector.wav",
+    "transcript": "Go for the beetle! Don't let it burrow into the stone!"
+  },
+  "tamer_ren_mother": {
+    "file": "voices/tamer_ren_mother.wav",
+    "transcript": "Some wounds take longer than others. And some people need more time to understand what you've done for them."
+  },
+  "tamer_ren_father": {
+    "file": "voices/tamer_ren_father.wav",
+    "transcript": "You did what you had to do, son. She knows that even if she cannot say it right now."
+  },
+  "tamer_leopold": {
+    "file": "voices/tamer_leopold.wav",
+    "transcript": "Please... We can negotiate! There's no reason to let your beast tear through the ledgers!"
+  },
+  "tamer_cashan": {
+    "file": "voices/tamer_cashan.wav",
+    "transcript": "I see you're still charming in the mornings, little brother. The Goldcrest family cannot afford unnecessary setbacks."
+  },
+  "tamer_min": {
+    "file": "voices/tamer_min.wav",
+    "transcript": "Ren, according to the ancient academy records, that fungal formation hasn't been observed in over two centuries."
+  },
+  "tamer_yang": {
+    "file": "voices/tamer_yang.wav",
+    "transcript": "Combatants, take your marks! Any lethal intent will result in immediate disqualification from the tournament!"
+  },
+  "tamer_wei": {
+    "file": "voices/tamer_wei.wav",
+    "transcript": "You possess raw instinct, Patender, yet you display an alarming disregard for foundational discipline."
+  },
+  "tamer_men": {
+    "file": "voices/tamer_men.wav",
+    "transcript": "Don't let these spoiled noble bastards look down on you, Ren. We know what you're capable of."
+  },
+  "tamer_selphira": {
+    "file": "voices/tamer_selphira.wav",
+    "transcript": "You have exceeded our modest expectations, young tamer. The Ashanway family will remember your service."
+  },
+  "tamer_cass": {
+    "file": "voices/tamer_cass.wav",
+    "transcript": "The cloud bird detects no spiritual resonance beyond the perimeter, Lady Luna."
+  },
+  "tamer_director": {
+    "file": "voices/tamer_director.wav",
+    "transcript": "Power without discipline is merely chaos waiting to consume the wielder. Welcome to our academy."
+  },
+  "matilda": {
+    "file": "voices/matilda.wav",
+    "transcript": "oh your che my da shell do wait du me no w tea i thought her ma naza"
+  },
+  "arnold-1": {
+    "file": "voices/arnold-1.wav",
+    "transcript": "you want to fuck at me you fing qu better me i quie boy."
+  },
+  "tamer_larissa": {
+    "file": "voices/tamer_larissa.wav",
+    "transcript": "If you think I'm going to stand back while you take all the risk down here, Ren, you're out of your mind."
+  },
+  "tamer_guard": {
+    "file": "voices/tamer_guard.wav",
+    "transcript": "Halt! State your unit identification and beast registration before proceeding through the main gate."
+  },
+  "tamer_supervisor": {
+    "file": "voices/tamer_supervisor.wav",
+    "transcript": "The trial parameters have been calibrated. Any external mana interference will result in immediate disqualification."
+  },
+  "tamer_agent": {
+    "file": "voices/tamer_agent.wav",
+    "transcript": "Silence, Yaino spy. We've already seen your second beast, so don't play dumb."
+  },
+  "tamer_jesse": {
+    "file": "voices/tamer_jesse.wav",
+    "transcript": "Ah, hello Ren. That is quite expensive. Ten thousand crystals per month for each safeguarded object. I do not think it is worth it for those hydra scales."
+  },
+  "tamer_sulfa": {
+    "file": "voices/tamer_sulfa.wav",
+    "transcript": "Potions do not cure foolishness in men. In fact, some cases make me believe they double it."
+  },
+  "tamer_roslyn": {
+    "file": "voices/tamer_roslyn.wav",
+    "transcript": "Where is Min? Bad decision. Impossible! I surrender."
+  },
+  "tamer_isaac": {
+    "file": "voices/tamer_isaac.wav",
+    "transcript": "Someone from Craftsman's Guild managed to extract the acid once, but incorporating the proboscis into a basic spear takes true precision."
+  },
+  "tamer_finch": {
+    "file": "voices/tamer_finch.wav",
+    "transcript": "Look who honors us with his presence! Did the great beast tamer finally decide to grace the surface?"
+  },
+  "tamer_heda": {
+    "file": "voices/tamer_heda.wav",
+    "transcript": "Listen to me, Han. No matter our situation, I want you to be a good person. Promise me."
+  },
+  "tamer_roaren": {
+    "file": "voices/tamer_roaren.wav",
+    "transcript": "That was incredible! We insect tamers glimpse a new era with you."
+  },
+  "tamer_sirius": {
+    "file": "voices/tamer_sirius.wav",
+    "transcript": "You have crossed a line that should never have been crossed."
+  },
+  "tamer_servant": {
+    "file": "voices/tamer_servant.wav",
+    "transcript": "Young love is always so complicated and energetic. Lady Selphira will be pleased when she returns."
+  },
+  "tamer_maximilian": {
+    "file": "voices/tamer_maximilian.wav",
+    "transcript": "Defensive coverage! Scatter and hold the perimeter!"
+  },
+  "tamer_chilong": {
+    "file": "voices/tamer_chilong.wav",
+    "transcript": "At last we meet. Your reputation precedes you, but my venom will dissolve your protection!"
+  },
+  "tamer_aldric": {
+    "file": "voices/tamer_aldric.wav",
+    "transcript": "And now, not supporting at the critical moment left us completely out of the rewards. We must recover some political relevance."
+  },
+  "tamer_baelthon": {
+    "file": "voices/tamer_baelthon.wav",
+    "transcript": "For the moment, we're going to stop the meetings. We're going to maintain a low profile and support royal initiatives."
+  },
+  "tamer_caelum": {
+    "file": "voices/tamer_caelum.wav",
+    "transcript": "At least not helping seemed to be a good decision in the end. Why take any unnecessary risks now?"
+  },
+  "tamer_daphina": {
+    "file": "voices/tamer_daphina.wav",
+    "transcript": "A correct decision for the wrong reasons. Because it is not the time to look antagonistic, we adopt a stance of total public support."
+  },
+  "fungus_a_snarky": {
+    "file": "voices/fungus_a_snarky.wav",
+    "transcript": "I am a symbiotic companion. Stop treating me like common garden fungi."
+  },
+  "fungus_b_sprite": {
+    "file": "voices/fungus_b_sprite.wav",
+    "transcript": "That action consumed far too much energy. Next time observe the environmental mana first."
+  },
+  "fungus_c_gremlin": {
+    "file": "voices/fungus_c_gremlin.wav",
+    "transcript": "You rush directly into danger every single day. One of these times you will have to handle it alone."
+  },
+  "airi_relu": {
+    "file": "voices/airi_relu.wav",
+    "transcript": "Good morning, Richard! Nya~ I've been waiting for the screen to light up. Did you sleep well?"
+  },
+  "airi_aria": {
+    "file": "voices/airi_aria.wav",
+    "transcript": "Monitoring signal drift... Ah, you've returned. Ready for another session of intellectual entropy?"
+  },
+  "airi_lupin": {
+    "file": "voices/airi_lupin.wav",
+    "transcript": "I've been watching the perimeter. All is secure, Richard. Stay close today."
+  },
+  "airi_kira": {
+    "file": "voices/airi_kira.wav",
+    "transcript": "Hmph! You're finally back? Don't get the wrong idea — I was just checking system logs, not waiting for you!"
+  },
+  "airi_rin": {
+    "file": "voices/airi_rin.wav",
+    "transcript": "System status nominal. Welcome back, Richard. I have pre-allocated your workspace."
+  },
+  "airi_yuki": {
+    "file": "voices/airi_yuki.wav",
+    "transcript": "Richard, you came back to me. I counted every single second you were away. Promise you will never leave me again."
+  },
+  "airi_mio": {
+    "file": "voices/airi_mio.wav",
+    "transcript": "Welcome back, Richard. I was hoping you would come by today. I made a small note of things to share with you."
+  },
+  "airi_hana": {
+    "file": "voices/airi_hana.wav",
+    "transcript": "Richard!! Yay, you're here!! I missed you so much! Today is going to be an amazing day!"
+  },
+  "airi_ren": {
+    "file": "voices/airi_ren.wav",
+    "transcript": "Hey! Ready to get to work? We've got a lot of ground to cover today, so let's make it count!"
+  },
+  "airi_klaus": {
+    "file": "voices/airi_klaus.wav",
+    "transcript": "Perimeter is secure. Take your time, focus on the task ahead, and let me handle the variables."
+  },
+  "airi_sebastian": {
+    "file": "voices/airi_sebastian.wav",
+    "transcript": "Good day. Everything has been prepared to your exact specifications. How may I be of service?"
+  },
+  "airi_sakura": {
+    "file": "voices/airi_sakura.wav",
+    "transcript": "はじめまして！今日からよろしくお願いしますね！一緒に楽しい時間を過ごしましょう！"
+  },
+  "airi_lucia": {
+    "file": "voices/airi_lucia.wav",
+    "transcript": "Hola, Richard. Qué alegría verte por aquí hoy. Estoy lista para lo que quieras hacer, ¿empezamos?"
+  },
+  "airi_amelie": {
+    "file": "voices/airi_amelie.wav",
+    "transcript": "Bonjour Richard. It is truly a pleasure to see you again. Tell me, what wonderful things are we working on today?"
+  },
+  "airi_meilin": {
+    "file": "voices/airi_meilin.wav",
+    "transcript": "你好呀！今天也要一起加油哦，无论发生什么，我都会一直在你身边支持你的。"
+  },
+  "airi_pico": {
+    "file": "voices/airi_pico.wav",
+    "transcript": "Waaaah! Don't leave me behind! Look at all these shiny new buttons we get to play with!"
+  },
+  "airi_morgana": {
+    "file": "voices/airi_morgana.wav",
+    "transcript": "So... mortal, you dare disturb the sanctuary of the twilight court? How delightfully bold of you."
+  },
+  "airi_unit7": {
+    "file": "voices/airi_unit7.wav",
+    "transcript": "Neural handshake complete. Systems operating at optimal efficiency. Ready for directive input."
+  },
+  "tamer_venmont": {
+    "file": "voices/tamer_venmont.wav",
+    "transcript": "The total increases of six Gold-rank beasts! Let's see if your arrogance survives this!"
+  },
+  "tamer_luna_mother": {
+    "file": "voices/tamer_luna_mother.wav",
+    "transcript": "Your father was so handsome when he was young. Inside, he loved with an intensity that scared even him."
+  },
+  "tamer_lykea": {
+    "file": "voices/tamer_lykea.wav",
+    "transcript": "Keep yourself safe! We require to contain it with more light! Sirius, combine our elements!"
+  },
+  "tamer_lyzea": {
+    "file": "voices/tamer_lyzea.wav",
+    "transcript": "Don't tell your mother. She'll say I'm ruining your dinner."
+  },
+  "tamer_assistant": {
+    "file": "voices/tamer_assistant.wav",
+    "transcript": "The one you told me about? The 'just to be sure' reason you hired me? But how bad can he be…"
+  },
+  "tamer_seiya": {
+    "file": "voices/tamer_seiya.wav",
+    "transcript": "Can we really win in the end against so many new powers?"
+  },
+  "tamer_student1_male": {
+    "file": "voices/tamer_student1_male.wav",
+    "transcript": "How many elements can it use? We have never seen anything like that before."
+  },
+  "tamer_student2_male": {
+    "file": "voices/tamer_student2_male.wav",
+    "transcript": "We already saw that the mantis can use all the natural ones. Can the hydra do the same?"
+  },
+  "tamer_student3_female": {
+    "file": "voices/tamer_student3_female.wav",
+    "transcript": "If it can use light and darkness simultaneously, what can it not do?"
+  },
+  "tamer_male_student": {
+    "file": "voices/tamer_male_student.wav",
+    "transcript": "Tacky. A proper wolverine should be dignified, not decorated like some festival attraction."
+  },
+  "tamer_female_student": {
+    "file": "voices/tamer_female_student.wav",
+    "transcript": "It could become bigger than the great White Serpent in the middle of battle."
+  },
+  "tamer_soldier": {
+    "file": "voices/tamer_soldier.wav",
+    "transcript": "Watch your fire! Cease fire on zone three immediately!"
+  },
+  "tamer_ludia": {
+    "file": "voices/tamer_ludia.wav",
+    "transcript": "My daughter, formally committed to a common blooded plebeian. Have them bring the tea."
+  },
+  "tamer_hannah": {
+    "file": "voices/tamer_hannah.wav",
+    "transcript": "Don't waste the mana! The spatial current is bending back on itself!"
   }
 }

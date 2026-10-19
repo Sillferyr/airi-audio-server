@@ -247,7 +247,7 @@ class AudioCppEngine {
       port: this.config.audio_cpp?.internal_port || 8080,
       backend: 'cuda',
       device: 0,
-      threads: 4,
+      threads: this.config.audio_cpp?.threads || 8,
       lazy_load: false,
       models: [
         {
@@ -260,8 +260,9 @@ class AudioCppEngine {
           // whose audio.cpp integration lacks streaming can opt out via config.
           mode: modelConfig.mode || (modelConfig.family === 'fish_audio' ? 'offline' : 'streaming'),
           session_options: {
-            cuda_graphs: 'true',
-            mem_saver: 'true'
+            cuda_graphs: modelConfig.session_options?.cuda_graphs || (modelConfig.family === 'fish_drama3' ? 'false' : 'true'),
+            mem_saver: 'true',
+            ...(modelConfig.session_options || {})
           },
           ...(resolvedVoiceRef ? {
             default_voice_preset: {
@@ -282,20 +283,24 @@ class AudioCppEngine {
     console.log(`[Engine] CUDA Path  : ${cudaBinPath}`);
 
     const binDir = path.dirname(resolvedServerExe);
+    const disableCudaGraphs = modelConfig.session_options?.cuda_graphs === 'false' || modelConfig.family === 'fish_drama3';
+    const envOverrides = {
+      ...process.env,
+      PATH: `${binDir};${cudaBinPath};${process.env.PATH}`,
+      ...(disableCudaGraphs ? { GGML_CUDA_DISABLE_GRAPHS: '1' } : {})
+    };
 
     if (process.platform === 'win32') {
       const runnerBat = path.join(__dirname, '../run_server.bat');
       this.process = spawn(`"${runnerBat}"`, [`"${resolvedServerExe}"`, `"${tempConfigPath}"`, `"${cudaBinPath}"`], {
         cwd: resolvedWorkingDir,
-        shell: true
+        shell: true,
+        env: envOverrides
       });
     } else {
       this.process = spawn(resolvedServerExe, ['--config', tempConfigPath], {
         cwd: resolvedWorkingDir,
-        env: {
-          ...process.env,
-          PATH: `${binDir}:${cudaBinPath}:${process.env.PATH}`
-        }
+        env: envOverrides
       });
     }
 
@@ -341,7 +346,7 @@ class AudioCppEngine {
     return modelId;
   }
 
-  async pollHealthCheck(timeoutMs = 90000) {
+  async pollHealthCheck(timeoutMs = 300000) {
     const startTime = Date.now();
     while (Date.now() - startTime < timeoutMs) {
       if (!this.process) {
@@ -387,7 +392,7 @@ class AudioCppEngine {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(payload)
         },
-        timeout: 120000
+        timeout: this.config.audio_cpp?.request_timeout_ms || 600000
       }, (res) => {
         const chunks = [];
         res.on('data', chunk => chunks.push(chunk));
@@ -408,8 +413,9 @@ class AudioCppEngine {
 
       req.on('timeout', () => {
         req.destroy();
+        const timeoutSec = Math.round((this.config.audio_cpp?.request_timeout_ms || 600000) / 1000);
         const lastErrOutput = this.lastLogs.slice(-20).join('\n');
-        reject(new Error(`Synthesis request timed out after 120s.\n--- Captured Engine Logs ---\n${lastErrOutput}`));
+        reject(new Error(`Synthesis request timed out after ${timeoutSec}s.\n--- Captured Engine Logs ---\n${lastErrOutput}`));
       });
 
       req.write(payload);
@@ -449,7 +455,7 @@ class AudioCppEngine {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(payload)
         },
-        timeout: 300000
+        timeout: this.config.audio_cpp?.request_timeout_ms || 600000
       }, (res) => {
         if (res.statusCode !== 200) {
           const chunks = [];

@@ -21,6 +21,8 @@ download_*.js
 !download_music.js
 !download_voicegen.js
 !download_sfx.js
+!download_drama3.js
+catalog_ctl.bat
 test_*.js
 run_*.js
 

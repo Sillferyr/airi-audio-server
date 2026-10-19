@@ -1,0 +1,202 @@
+From be0ee952232f31a89a6679db50d35974aa1ceb21 Mon Sep 17 00:00:00 2001
+From: Richard Pinedo <richard.pinedo@yahoo.com>
+Date: Sun, 23 Aug 2026 20:47:30 -0400
+Subject: [PATCH 2/3] feat(higgs_audio_tts): implement
+ IStreamingVoiceTaskSession for native real-time streaming
+
+---
+ .../engine/models/higgs_audio_tts/session.h   | 19 +++-
+ src/models/higgs_audio_tts/loader.cpp         |  8 +-
+ src/models/higgs_audio_tts/session.cpp        | 94 ++++++++++++++++++-
+ 3 files changed, 114 insertions(+), 7 deletions(-)
+
+diff --git a/include/engine/models/higgs_audio_tts/session.h b/include/engine/models/higgs_audio_tts/session.h
+index 6b19ff2a..1ca1f12c 100644
+--- a/include/engine/models/higgs_audio_tts/session.h
++++ b/include/engine/models/higgs_audio_tts/session.h
+@@ -17,7 +17,8 @@ namespace engine::models::higgs_audio_tts {
+ 
+ class HiggsTTSSession final
+     : public runtime::RuntimeSessionBase
+-    , public runtime::IOfflineVoiceTaskSession {
++    , public runtime::IOfflineVoiceTaskSession
++    , public runtime::IStreamingVoiceTaskSession {
+ public:
+     HiggsTTSSession(
+         runtime::TaskSpec task,
+@@ -30,6 +31,15 @@ public:
+     void prepare(const runtime::SessionPreparationRequest & request) override;
+     runtime::TaskResult run(const runtime::TaskRequest & request) override;
+ 
++    runtime::StreamingPolicy streaming_policy() const override;
++    void start_stream(const runtime::TaskRequest & request) override;
++    std::optional<runtime::StreamEvent> next_stream_event() override;
++    void set_stream_event_sink(runtime::StreamEventCallback sink) override;
++    runtime::TaskResult finish_stream() override;
++    void reset() override;
++    runtime::StreamEvent process_audio_chunk(const runtime::AudioChunk & chunk) override;
++    runtime::TaskResult finalize() override;
++
+ private:
+     struct ReferenceCacheEntry {
+         HiggsCodecEncodeOutput codes;
+@@ -74,6 +84,13 @@ private:
+     std::unique_ptr<HiggsGenerator> generator_;
+     runtime::CacheSlots<ReferenceCacheKey, ReferenceCacheEntry, ReferenceCacheKeyEqual> reference_cache_;
+     std::optional<ReferenceCacheEntry> uncached_reference_;
++
++    bool stream_started_ = false;
++    std::vector<runtime::TaskRequest> stream_chunks_;
++    size_t stream_chunk_index_ = 0;
++    runtime::AudioBuffer stream_merged_audio_;
++    const HiggsCodecEncodeOutput * stream_reference_codes_ = nullptr;
++    std::string stream_reference_text_;
+ };
+ 
+ }  // namespace engine::models::higgs_audio_tts
+diff --git a/src/models/higgs_audio_tts/loader.cpp b/src/models/higgs_audio_tts/loader.cpp
+index efc600c7..90d04a1e 100644
+--- a/src/models/higgs_audio_tts/loader.cpp
++++ b/src/models/higgs_audio_tts/loader.cpp
+@@ -27,7 +27,7 @@ runtime::ModelMetadata metadata(const HiggsAssets &) {
+ runtime::CapabilitySet capabilities(const HiggsAssets &) {
+     runtime::CapabilitySet out;
+     out.supported_tasks = {
+-        {runtime::VoiceTaskKind::Tts, {runtime::RunMode::Offline}},
++        {runtime::VoiceTaskKind::Tts, {runtime::RunMode::Offline, runtime::RunMode::Streaming}},
+     };
+     out.supports_speaker_reference = true;
+     out.languages = {"Auto"};
+@@ -69,7 +69,7 @@ public:
+     runtime::CapabilitySet advertised_capabilities() const override {
+         runtime::CapabilitySet out;
+         out.supported_tasks = {
+-            {runtime::VoiceTaskKind::Tts, {runtime::RunMode::Offline}},
++            {runtime::VoiceTaskKind::Tts, {runtime::RunMode::Offline, runtime::RunMode::Streaming}},
+         };
+         out.supports_speaker_reference = true;
+         return out;
+@@ -133,8 +133,8 @@ const runtime::CapabilitySet & HiggsTTSLoadedModel::capabilities() const noexcep
+ std::unique_ptr<runtime::IVoiceTaskSession> HiggsTTSLoadedModel::create_task_session(
+     const runtime::TaskSpec & task,
+     const runtime::SessionOptions & options) const {
+-    if (task.mode != runtime::RunMode::Offline) {
+-        throw std::runtime_error("Higgs TTS only supports offline sessions");
++    if (task.mode != runtime::RunMode::Offline && task.mode != runtime::RunMode::Streaming) {
++        throw std::runtime_error("Higgs TTS only supports offline and streaming sessions");
+     }
+     if (task.task != runtime::VoiceTaskKind::Tts) {
+         throw std::runtime_error("Higgs TTS only supports the Tts task");
+diff --git a/src/models/higgs_audio_tts/session.cpp b/src/models/higgs_audio_tts/session.cpp
+index 0a5d4779..9fb75f72 100644
+--- a/src/models/higgs_audio_tts/session.cpp
++++ b/src/models/higgs_audio_tts/session.cpp
+@@ -130,8 +130,8 @@ HiggsTTSSession::HiggsTTSSession(
+     if (assets_ == nullptr) {
+         throw std::runtime_error("Higgs TTS session requires assets");
+     }
+-    if (task_.mode != runtime::RunMode::Offline) {
+-        throw std::runtime_error("Higgs TTS currently supports offline sessions");
++    if (task_.mode != runtime::RunMode::Offline && task_.mode != runtime::RunMode::Streaming) {
++        throw std::runtime_error("Higgs TTS currently supports offline and streaming sessions");
+     }
+     if (task_.task != runtime::VoiceTaskKind::Tts) {
+         throw std::runtime_error("Higgs TTS only supports the Tts task");
+@@ -320,4 +320,94 @@ HiggsGenerationRequest HiggsTTSSession::make_generation_request(
+     return out;
+ }
+ 
++runtime::StreamingPolicy HiggsTTSSession::streaming_policy() const {
++    runtime::StreamingPolicy policy;
++    policy.input = runtime::StreamingInputKind::None;
++    policy.output = runtime::StreamingOutputKind::PullEvents;
++    return policy;
++}
++
++void HiggsTTSSession::start_stream(const runtime::TaskRequest & request) {
++    require_prepared("Higgs TTS streaming");
++    if (task_.mode != runtime::RunMode::Streaming) {
++        throw std::runtime_error("Higgs TTS start_stream requires a streaming session");
++    }
++    reset();
++
++    const int64_t text_chunk_size =
++        engine::text::parse_text_chunk_size_override(request.options).value_or(kDefaultTextChunkSize);
++    const auto text_chunk_mode =
++        engine::text::parse_text_chunk_mode_override(request.options).value_or(engine::text::TextChunkMode::Default);
++    stream_chunks_ = runtime::chunk_text_request(request, text_chunk_size, text_chunk_mode);
++    stream_reference_text_ = runtime::find_option(request.options, {"reference_text"}).value_or("");
++    const auto * reference_audio = find_reference_audio(request);
++    stream_reference_codes_ =
++        reference_audio != nullptr ? &resolve_reference_codes(*reference_audio, stream_reference_text_) : nullptr;
++    stream_chunk_index_ = 0;
++    stream_started_ = true;
++}
++
++std::optional<runtime::StreamEvent> HiggsTTSSession::next_stream_event() {
++    if (!stream_started_) {
++        throw std::runtime_error("Higgs TTS streaming has not been started");
++    }
++    if (stream_chunk_index_ >= stream_chunks_.size()) {
++        return std::nullopt;
++    }
++    const size_t index = stream_chunk_index_++;
++    const auto & chunk_req = stream_chunks_[index];
++    const auto generation_request = make_generation_request(chunk_req, stream_reference_codes_);
++    auto result = generator_->generate(generation_request);
++
++    runtime::AudioBuffer chunk_audio{
++        result.audio.sample_rate,
++        result.audio.channels,
++        std::move(result.audio.values),
++    };
++
++    runtime::append_audio_buffer(stream_merged_audio_, chunk_audio);
++
++    runtime::StreamEvent event;
++    event.named_audio_outputs.push_back({
++        "chunk_" + std::to_string(index),
++        std::move(chunk_audio),
++        {},
++    });
++    return event;
++}
++
++void HiggsTTSSession::set_stream_event_sink(runtime::StreamEventCallback sink) {
++    (void)sink;
++}
++
++runtime::TaskResult HiggsTTSSession::finish_stream() {
++    if (!stream_started_) {
++        throw std::runtime_error("Higgs TTS streaming has not been started");
++    }
++    while (next_stream_event().has_value()) {
++    }
++    runtime::TaskResult out;
++    out.audio_output = std::move(stream_merged_audio_);
++    reset();
++    return out;
++}
++
++void HiggsTTSSession::reset() {
++    stream_started_ = false;
++    stream_chunks_.clear();
++    stream_chunk_index_ = 0;
++    stream_merged_audio_ = runtime::AudioBuffer{};
++    stream_reference_codes_ = nullptr;
++    stream_reference_text_.clear();
++}
++
++runtime::StreamEvent HiggsTTSSession::process_audio_chunk(const runtime::AudioChunk & chunk) {
++    (void)chunk;
++    throw std::runtime_error("Higgs TTS streaming does not consume audio chunks");
++}
++
++runtime::TaskResult HiggsTTSSession::finalize() {
++    return finish_stream();
++}
++
+ }  // namespace engine::models::higgs_audio_tts
+-- 
+2.46.2.windows.1
+

@@ -76,6 +76,26 @@ const MODEL_CATALOG = [
     features: "ABC Score Planning CoT, 48kHz Stereo Acoustic Diffusion, Plug-and-Play AR LoRAs",
     relPath: "models/Yue2-3B-GGUF/yue2-3b-q4_0.gguf",
     downloadUrl: "https://huggingface.co/audio-cpp/audio.cpp-gguf/resolve/main/Yue2-3B-GGUF/yue2-3b-q4_0.gguf"
+  },
+  {
+    num: "8",
+    id: "fish-drama3",
+    name: "Fish Audio Drama 3 Q2_K (Next-Gen MoE TTS)",
+    family: "fish_drama3",
+    vram: "~5.50 GB (offloaded)",
+    features: "40-layer MoE, Zero-Shot Voice Cloning, Paralinguistic & Speaker Tags, SSE Streaming",
+    relPath: "models/Drama-3-GGUF/drama-3-backbone-8bit-experts-Q2_K.gguf",
+    downloadUrl: "https://huggingface.co/Jmica/Drama-3-GGUF/resolve/main/drama-3-backbone-8bit-experts-Q2_K.gguf",
+    mode: "streaming",
+    session_options: {
+      "cuda_graphs": "false",
+      "fish_drama3.disk_experts": "true",
+      "fish_drama3.pin_experts": "true",
+      "fish_drama3.expert_cache_size": "16",
+      "fish_drama3.cpu_expert_layers": "0",
+      "fish_drama3.codec_backend": "cpu",
+      "fish_drama3.context_length": "2048"
+    }
   }
 ];
 
@@ -242,7 +262,7 @@ function runSetup() {
       console.log(`      Path: ${fullPath}\n`);
     });
 
-    rl.question("Enter your choice (1-7, default is 1): ", async (answer) => {
+    rl.question("Enter your choice (1-8, default is 1): ", async (answer) => {
       const choice = answer.trim() || "1";
       const selected = MODEL_CATALOG.find(m => m.num === choice) || MODEL_CATALOG[0];
 
@@ -269,7 +289,9 @@ function runSetup() {
       config.models[selected.id] = {
         family: selected.family,
         path: modelFullPath,
-        allow_unfiltered_tags: selected.family === 'fish_audio' || selected.family === 'higgs_audio_tts'
+        mode: selected.mode || (selected.family === 'fish_audio' ? 'offline' : 'streaming'),
+        allow_unfiltered_tags: selected.family === 'fish_audio' || selected.family === 'higgs_audio_tts' || selected.family === 'fish_drama3',
+        ...(selected.session_options ? { session_options: selected.session_options } : {})
       };
 
       // Ensure ASR configuration is set to native Citrinet ASR
