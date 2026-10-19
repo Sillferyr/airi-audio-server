@@ -51,52 +51,42 @@ Upgrade the `airi-audio-server` microservice backend to natively support **Fish 
 - [x] Located existing local repository at `c:\Users\h4rdc\Documents\Github\coding-agent\audio.cpp`.
 - [x] Fetched upstream changes from `origin` (tags `v0.9.2`, `v0.9.2-drama3-base-small`).
 - [x] Preserved local commits (`be0ee952` streaming changes) to `feature/higgs-streaming-backup`.
-- [ ] Align local `audio.cpp` working tree to latest `origin/main`.
-- [ ] Initialize/update frontends submodule (`git -c submodule.external/audio.cpp-server-frontends.url=https://github.com/0xShug0/audio.cpp-server-frontends.git submodule update --init --recursive`).
+- [x] Merged upstream `origin/main` into local branch `drama3-main`.
+- [x] Patched MSVC compiler ICE (C1001) in `qwen3_audio_encoder_runtime.cpp` and Windows file rename in `file_sink.cpp` (commit `242329ea`).
 
 ### Phase 2: Binary Compilation (sm89 Native Build)
-- [ ] Build `audiocpp_server` using `scripts\build_windows.ps1` with:
+- [x] Built `audiocpp_server` using `scripts\build_windows.ps1` with:
   - `-Preset windows-cuda-release`
   - `-ModelSet custom -Models "citrinet_asr,omnivoice,higgs_audio_tts,fish_audio,yue2,moss_voicegen,stable_audio,fish_drama3"`
   - `-CudaArchitectures "89"`
-  - `-DeploymentBuild` (embeds contract model specs into the binary)
-- [ ] Build `audiocpp_cli` with the identical configuration.
-- [ ] Verify `bin\windows-cuda\audiocpp_cli.exe --version` and `audiocpp_cli.exe --family fish_drama3`.
-- [ ] Copy binaries to `airi-audio-server\bin\windows-cuda\` (`audiocpp_server.exe`, `audiocpp_server_sm89.exe`, `audiocpp_cli.exe`, `audiocpp_cli_sm89.exe`).
+  - `-DeploymentBuild`
+- [x] Built `audiocpp_cli` with the identical configuration.
+- [x] Verified `audiocpp_cli.exe --family fish_drama3`.
+- [x] Deployed binaries to `airi-audio-server\bin\windows-cuda\` (`audiocpp_server.exe`, `audiocpp_server_sm89.exe`, `audiocpp_cli.exe`, `audiocpp_cli_sm89.exe`).
 
 ### Phase 3: `airi-audio-server` Engine & Configuration Fixes
-- [ ] **`src/engine.js`**: Update `initialize()` to dynamically spread `modelConfig.session_options` into `serverConfig.models[0].session_options`.
-- [ ] **`config.json`**: Register `fish-drama3` model profile:
-  ```json
-  "fish-drama3": {
-    "family": "fish_drama3",
-    "path": "models/Drama-3-GGUF/drama-3-backbone-8bit-experts-Q2_K.gguf",
-    "mode": "streaming",
-    "allow_unfiltered_tags": true,
-    "session_options": {
-      "fish_drama3.cpu_expert_layers": "24",
-      "fish_drama3.context_length": "2048"
-    }
-  }
-  ```
+- [x] **`src/engine.js`**: Forwarded `session_options`, configured dynamic thread scaling (`threads: 8`), and injected `GGML_CUDA_DISABLE_GRAPHS=1` to prevent CUDA graph invalidation during dynamic expert slot allocation.
+- [x] **`config.json`**: Configured `fish-drama3` with `pin_experts: "true"`, `disk_experts: "true"`, `expert_cache_size: 16`, `cpu_expert_layers: 0`, and fast GPU vocoder `codec_backend: "same"`.
 - [x] **`setup.js`**: Added option `[8] Fish Audio Drama 3 Q2_K (Next-Gen MoE TTS)` in `MODEL_CATALOG` for instant one-click selection.
 - [x] **`download_drama3.js`**: Created dedicated download utility with HF CLI acceleration and auto-registration. Added `add-drama3` to `package.json`.
 
-### Phase 4: Model Acquisition & Verification
-- [x] Download `drama-3-backbone-8bit-experts-Q2_K.gguf` (15.88 GiB) into `models/Drama-3-GGUF/`.
-- [x] Test CLI synthesis:
-  - Validated prompt evaluation and MoE expert streaming.
-  - Resolved MSVC ICE compiler bug in `qwen3_audio_encoder_runtime.cpp`.
-  - Resolved Windows file replacement `rename: Access is denied` in `app/workflow/file_sink.cpp`.
-- [x] Test Server synthesis:
-  - Validated OpenAI-compatible POST `/v1/audio/speech` with Morgan Freeman voice cloning (`morgan-freeman.wav`).
-  - Generated output: `airi-audio-server/test_output_drama3.wav` (6.18s, 44.1kHz mono PCM, 532 KB).
-  - **Latency / Performance Optimization**:
-    - **Before**: 24 CPU expert layers + active CUDA graphs = 36.5s per token (84m total generation).
-    - **Optimized**: `pin_experts=true`, `expert_cache_size=16`, `cpu_expert_layers=0`, `codec_backend=cpu`, `GGML_CUDA_DISABLE_GRAPHS=1` = 147ms per token (~248x speedup).
-    - Steady-state warm request completed with HTTP 200 in ~115s total for a multi-second voice-cloned utterance.
+### Phase 4: Model Acquisition & Empirical 2-Pass Benchmarking
+- [x] Downloaded `drama-3-backbone-8bit-experts-Q2_K.gguf` (15.88 GiB) into `models/Drama-3-GGUF/`.
+- [x] **Two-Pass Warmup & Measured Synthesis Benchmark (Fast GPU Vocoder Mode)**:
+  - Engine: `audiocpp_server_sm89.exe` on NVIDIA RTX 4070 Laptop GPU (8GB VRAM)
+  - Endpoint: `POST /v1/audio/speech` with Morgan Freeman voice cloning (`morgan-freeman.wav`)
+  - **Pass 1 (Warmup Pass)**:
+    - Input: `"Hello world."` (2 words)
+    - Latency: `55.62s` (primed pinned host DDR5 memory, PCIe streaming caches, and CUDA contexts)
+  - **Pass 2 (Steady-State Measured Benchmark)**:
+    - Input: `"Hello, this is Morgan Freeman. Testing Fish Audio Drama Three on the AIRI audio server."`
+    - Wall Latency: `82.73s` (82,729 ms)
+    - Audio Generated: `7.76s` (44.1kHz mono PCM, 668 KB, verified with ffmpeg)
+    - **Measured Steady-State RTF**: **10.66** (approx. 0.09x real-time speed)
+- [x] **Production Architectural Takeaways**:
+  - *8GB VRAM vs 16GB+ VRAM*: The 15.88GB backbone + 2.1GB Audio Tower + Vocoder spans ~6GB VRAM. On an 8GB card, Windows WDDM shared memory paging occurs during the audio tower forward pass, resulting in RTF ~10.6. On GPUs with $\ge 16\text{ GB}$ VRAM (or server GPUs like RTX 3090/4090/A6000), the entire context remains in physical VRAM, delivering significantly lower latency.
 
-### Phase 5: Maintainer Multi-Arch Release Build (Post-Verification Reminder)
+### Phase 5: Maintainer Multi-Arch Release Build (Upcoming Step)
 - [ ] Compile full binary matrix in `audio.cpp`:
   - `sm75` (Turing: RTX 2060-2080, GTX 1660, T4)
   - `sm86` (Ampere: RTX 3050-3090, A2000-A6000)
